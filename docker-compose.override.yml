@@ -1,0 +1,6 @@
+services:
+  wordpress:
+    ports:
+      - "${WP_PORT:-8000}:80"
+    volumes:
+      - ./theme/scriptlab-theme:/var/www/html/wp-content/themes/scriptlab-theme
