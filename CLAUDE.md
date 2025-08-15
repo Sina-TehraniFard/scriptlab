@@ -1,135 +1,99 @@
 # CLAUDE.md
 
-このドキュメントは、Claude Codeがコード作業を行う際のルールを記載しています。
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## 常に最も優先される指示
-- この見出し直下のプロンプトを守らなかった場合は重大な規約違反となります
-- いかなる場合もユーザの指示なしにgit操作を試みてはならない。
+## プロジェクト概要
 
----
+**ScriptLab WordPress Theme Development**
+- WordPressテーマ開発環境（Docker構成）
+- ベーステーマ: _s (Underscores) スターターテーマ
+- テーマパス: `theme/scriptlab-theme/`
+- 開発URL: `http://localhost:8000` (docker-compose.override.ymlで設定)
 
-## 1. 適用範囲
-このファイルはClaude Codeの汎用的な作業ルールのみを記載します。  
-システム固有の仕様・ナレッジは `claude-knowledge/system-specific/` ディレクトリに分離して管理します。
+## 開発コマンド
 
-### ナレッジ管理ルール
-- **汎用設定**: `claude-knowledge/` 直下（様々なシステムで再利用可能）
-- **システム固有設定**: `claude-knowledge/system-specific/` 配下（プロジェクト特有情報）
-- **再利用方法**: `.gitignore`で`system-specific/*`を除外することで汎用部分を他システムで利用可能
-- **参照順序**: 汎用設定を確認後、必要に応じてシステム固有情報を参照する
+### 環境管理
+```bash
+# Docker環境起動
+docker compose up -d
 
----
+# Docker環境停止
+docker compose down
 
-## 2. 作業ルール
+# コンテナ再起動（変更反映用）
+docker compose restart wordpress
+
+# ログ確認
+docker compose logs -f wordpress
+```
+
+### PHPチェック・検証
+```bash
+# PHP構文チェック（テーマディレクトリ内）
+find theme/scriptlab-theme -name "*.php" -exec php -l {} \;
+
+# WordPress Coding Standards（PHPCS導入時）
+vendor/bin/phpcs --standard=WordPress theme/scriptlab-theme
+
+# WP-CLIテーマチェック（WP-CLI導入時）
+wp theme check scriptlab
+```
+
+## アーキテクチャ構造
+
+### テーマ構造（_sベース）
+```
+theme/scriptlab-theme/
+├── style.css              # テーマ情報とスタイル定義
+├── functions.php          # テーマ機能・フック登録
+├── index.php             # メインテンプレート
+├── header.php            # ヘッダーテンプレート
+├── footer.php            # フッターテンプレート  
+├── sidebar.php           # サイドバーテンプレート
+├── inc/                  # 機能分離ディレクトリ
+│   ├── custom-header.php     # カスタムヘッダー機能
+│   ├── customizer.php        # カスタマイザー設定
+│   ├── template-tags.php     # テンプレートタグ関数
+│   └── template-functions.php # テンプレート補助関数
+├── js/                   # JavaScript
+│   ├── customizer.js         # カスタマイザー用JS
+│   └── navigation.js         # ナビゲーション用JS
+└── template-parts/       # 再利用可能なテンプレートパーツ
+    ├── content.php           # 投稿コンテンツ表示
+    └── content-none.php      # コンテンツなし時表示
+```
+
+### Docker構成
+- **WordPress**: 6.5.3-php8.2-apache
+- **MySQL**: 8.0
+- **ボリュームマウント**: テーマディレクトリをコンテナ内にマウント
+- **環境変数**: `.env`ファイルで管理
+
+## 重要な開発ルール
+
+### WordPress開発規約
+- **エスケープ必須**: 出力時は`esc_html()`, `esc_attr()`, `esc_url()`使用
+- **国際化対応**: テキストは`__()`, `_e()`等でラップ
+- **nonce検証**: フォーム送信時は必須
+- **プラガブル関数**: `if ( ! function_exists() )`でラップ
+
+### テーマ開発時の確認事項
+1. PHPエラーがないか構文チェック実行
+2. functions.phpの既存コードとの競合確認
+3. テンプレート階層に従った適切なファイル配置
+4. カスタム投稿タイプ・タクソノミーの責任分界考慮
+
+## 作業ルール
 
 ### ユーザーからの質問への対応（Q&A）
 - 直接回答すること。追加のガイドライン参照は不要です。
 - ナレッジのフルパスをもらった場合は該当ディレクトリを確認して回答する
 
-### ユーザーからのタスク依頼（実装・リファクタリングなど）
-- 作業前に必ず以下を確認する：
-  - `claude-knowledge/` 配下の汎用ガイドライン（function/, meta/ など）
-  - `claude-knowledge/system-specific/` 配下のシステム固有情報
-  - **実装関連のドキュメント（最重要）**
-- **実装完了後は必ずコンパイルエラー確認を実行する**
-- 作業後は適切なディレクトリにナレッジを追記し、変更内容の要約を報告する
+### 実装タスク実行時
+- PHP実装後は必ず構文チェック実行: `find theme/scriptlab-theme -name "*.php" -exec php -l {} \;`
+- エラーが1件でもある場合は修正してから完了報告
+- functions.php編集時は既存コードとの競合を確認
 
-#### 実装完了時の必須確認（最重要）
-Claude Codeは実装作業完了時に**必ず以下を実行**する：
-
-1. **バックエンドコンパイル確認**（Kotlin/Java）
-   ```bash
-   ./gradlew compileKotlin compileTestKotlin
-   ```
-
-2. **フロントエンドコンパイル確認**（Vue3/TypeScript）
-   ```bash
-   npm run type-check
-   # または
-   yarn type-check
-   ```
-
-3. **ビルド確認**
-   ```bash
-   ./gradlew build --no-daemon
-   # フロントエンドの場合
-   npm run build
-   ```
-
-4. **WordPressテーマ開発時の確認**（PHP/WordPress）
-   ```bash
-   # PHP構文チェック
-   find . -name "*.php" -exec php -l {} \;
-   
-   # WordPress Coding Standards確認（PHPCS導入済みの場合）
-   vendor/bin/phpcs --standard=WordPress .
-   
-   # テーマチェック（WP-CLI導入済みの場合）
-   wp theme check
-   ```
-
-#### エラー時の対応
-- **コンパイルエラーが1件でもある場合は実装未完了とみなす**
-- エラーを全て修正してから完了報告する
-- エラー内容と修正内容をユーザーに報告する
-
-#### 文書作成時の語尾ルール（厳守）
-- **「すること」「であること」等の「こと」で終わる語尾は規約違反**
-- 正しい語尾: 「する」「である」「しない」「ではない」
-- 例:
-  - ❌ 「テストを実行すること」→ ✅ 「テストを実行する」
-  - ❌ 「エラーがないこと」→ ✅ 「エラーがない」
-
-### ユーザーからのテストコード実装依頼
-- 作業前に `claude-knowledge/function/testing/` およびシステム固有のテスト関連ルールを確認し、遵守する
-
-### WordPressテーマ開発固有のルール
-
-#### テーマ構造の理解と遵守
-- **テンプレート階層**を理解し、適切なテンプレートファイルを作成・編集する
-- **functions.php**への機能追加は、既存コードとの競合を避けるため必ず既存の内容を確認する
-- **カスタム投稿タイプ**や**カスタムタクソノミー**は、プラグイン領域との責任分界を考慮する
-
-#### WordPressコーディング規約
-- **WordPress Coding Standards**に準拠する
-- **エスケープ処理**: 出力時は必ず`esc_html()`, `esc_attr()`, `esc_url()`等を使用する
-- **国際化対応**: テキストは`__()`, `_e()`, `esc_html__()`等でラップする
-- **nonce検証**: フォーム送信時は必ずnonce検証を実装する
-
-#### 開発時の注意事項
-- **子テーマ対応**: 親テーマを開発する場合は子テーマでのカスタマイズを考慮する
-- **プラガブル関数**: `if ( ! function_exists() )`でラップし、子テーマでの上書きを可能にする
-- **アクションフック・フィルターフック**: 適切な位置に`do_action()`や`apply_filters()`を配置する
-- **テーマカスタマイザー**: 設定項目は可能な限りカスタマイザーAPIを使用する
-
-#### パフォーマンス考慮事項
-- **クエリの最適化**: `WP_Query`使用時は必要なフィールドのみ取得する
-- **キャッシュ活用**: トランジェントAPIを適切に使用する
-- **アセット最適化**: CSSとJSは適切に圧縮・結合する
-- **画像最適化**: `wp_get_attachment_image()`等のWordPress関数を使用する
-
-### ナレッジファイル作成時の品質保証
-Claude Codeは以下の品質基準を**必ず**満たしてナレッジファイルを作成する：
-
-#### 必須構造チェック（作成時）
-1. **タグ行必須**: タイトル直後に「タグ: 」で始まる行を記載
-2. **タグ4種必須**: #技術/○○ #機能/○○ #用途/○○ #重要度/○○ を各1個以上
-3. **セクション必須**: 概要・詳細・実装例・関連事項の4セクション
-4. **JSON-LD必須**: ファイル末尾にjsonld-schema-guidelines.md準拠のメタデータ
-5. **命名規則必須**: {category}-{function}-{resource}.md形式
-
-#### 自動検証（作成後即実行）
-```bash
-# 作成したファイルで以下を自動実行:
-grep -q "^タグ:" {file} || echo "ERROR: タグ行なし"
-grep -o "#[^[:space:]]*" {file} | wc -l | awk '$1<4{print "ERROR: タグ不足"}'
-grep -q '"@context": "https://schema.org"' {file} || echo "ERROR: JSON-LD不正"
-```
-
-#### エラー時の対応
-- 検証失敗時は**必ず修正**してから完了報告すること
-- ユーザーには修正内容も併せて報告すること
-
----
-
-以上
+### Git操作ルール
+- ユーザーの明示的な指示なしにgit操作を実行しない
+- commit作成を依頼された場合のみgitコマンドを実行
