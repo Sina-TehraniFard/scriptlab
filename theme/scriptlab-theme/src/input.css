@@ -1,0 +1,82 @@
+/*
+Theme Name: ScriptLab Theme
+Theme URI: http://underscores.me/
+Author: sina
+Author URI: http://underscores.me/
+Description: A custom WordPress starter theme based on _s (underscores) with Tailwind CSS
+Version: 1.0.0
+Tested up to: 6.5
+Requires PHP: 7.4
+License: GNU General Public License v2 or later
+License URI: LICENSE
+Text Domain: scriptlab
+Tags: custom-background, custom-logo, custom-menu, featured-images, threaded-comments, translation-ready
+*/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* WordPress必須クラス */
+@layer components {
+  /* WordPress標準クラス */
+  .screen-reader-text {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+  
+  .screen-reader-text:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+  }
+
+  /* アライメントクラス */
+  .alignleft {
+    float: left;
+    margin-right: 1rem;
+  }
+
+  .alignright {
+    float: right;
+    margin-left: 1rem;
+  }
+
+  .aligncenter {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ギャラリー・キャプション */
+  .wp-caption {
+    max-width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  .wp-caption-text {
+    font-size: 0.875rem;
+    color: #4b5563;
+    margin-top: 0.25rem;
+  }
+
+  .gallery-caption {
+    font-size: 0.875rem;
+    color: #4b5563;
+    margin-top: 0.25rem;
+  }
+
+  /* スティッキー投稿 */
+  .sticky {
+    position: relative;
+  }
+
+  /* バイライン非表示 */
+  .bypostauthor {
+    position: relative;
+  }
+}

@@ -1,6 +1,6 @@
 ---
-allowed-tools: Read(*), Write(*), Edit(*), MultiEdit(*), Bash(find:*), Bash(php -l:*), Bash(docker compose:*), Grep(*), Glob(*)
-description: WordPressテーマ機能を実装（セキュア＆ベストプラクティス準拠）
+allowed-tools: Read(*), Write(*), Edit(*), MultiEdit(*), Bash(find:*), Bash(php -l:*), Bash(docker compose:*), Bash(npm run:*), Grep(*), Glob(*)
+description: WordPressテーマ機能を実装（Tailwind CSS必須・セキュア）
 argument-hint: 実装したい機能の説明（例：カスタム投稿タイプ、メニュー、ウィジェット等）
 ---
 
@@ -15,6 +15,12 @@ $ARGUMENTS
 2. functions.php と関連ファイルを読み込んで現状把握
 3. 要求された機能を以下の規約で実装：
 
+**スタイリング規約（必須）**
+- **Tailwind CSSのみ使用** - カスタムCSSは禁止
+- クラス名: Tailwindユーティリティクラスのみ（例: bg-white, p-4, flex）
+- インラインスタイル禁止
+- style属性の使用禁止
+
 **必須セキュリティ対策**
 - 出力: esc_html(), esc_attr(), esc_url(), wp_kses()
 - 入力: sanitize_text_field(), absint(), wp_verify_nonce()
@@ -27,12 +33,24 @@ $ARGUMENTS
 - フック: add_action('init', 'func_name', 10)
 - テキストドメイン: 'scriptlab'
 
-4. 実装後、PHP構文チェック実行:
+4. HTMLマークアップはTailwindクラスで装飾:
+```php
+echo '<div class="bg-white p-6 rounded-lg shadow-md">';
+echo '<h2 class="text-2xl font-bold mb-4">' . esc_html($title) . '</h2>';
+echo '</div>';
+```
+
+5. 実装後、PHP構文チェック実行:
 ```bash
 find theme/scriptlab-theme -name "*.php" -exec php -l {} \;
 ```
 
-5. エラーが0件になるまで修正を繰り返す
+6. Tailwind CSSのビルド:
+```bash
+npm run build
+```
+
+7. エラーが0件になるまで修正を繰り返す
 </task>
 
 ## コード例（参考用）
